@@ -53,21 +53,24 @@ class InstinctFaceView extends WatchUi.WatchFace {
         } else {
             // No round window and real hands (Crossover): no digital clock either. The rows
             // spread over the whole round screen, centred, with heart rate as its own row:
-            //   panel 18..41 | bar 48..58 (wider)
-            //   temp  (hands' pivot)  battery     on the centre line, y 81..95
-            //   date row 104..124 (centred) | heart rate + AQI 134..148
+            // Spread over the whole round screen, each row as wide as the circle allows there:
+            //   panel 12..35 | bar 42..52, 140 wide
+            //   temp at the left edge . . . (hands' pivot) . . . battery at the right edge
+            //   [day] . . . [date] 112..132, boxes pushed apart | heart rate . . . AQI 142..156
             var cx = dc.getWidth() / 2;
-            PY = 18;
+            PY = 12;
             PX = cx - PW / 2;
-            TL_W = 120; TL_Y = 48;
+            TL_W = 140; TL_Y = 42;
             TL_X = cx - TL_W / 2;
-            DATE_Y = 104; DATE_DX = cx - 53 - 8;          // row is 106 px wide from x 8
+            DATE_Y = 112; DATE_DX = 12; DATE_GAP = 30;    // day 20..61, date 93..156
             TEMP_Y = cx - 7;
-            BOT_Y = 134; BOT_L = 32; BOT_R = 144;         // pulled in from the round edge
+            PIVOT_L = 12; PIVOT_R = 164;
+            BOT_Y = 142; BOT_L = 32; BOT_R = 144;         // circle is ~112 wide down there
         }
     }
-    const PIVOT_L = 70; const PIVOT_R = 106;   // Crossover: clear of the hands' centre cap
-    var DATE_DX = 0;   // shifts the date row / alert badge right (centred without the window)
+    var PIVOT_L = 70; var PIVOT_R = 106;   // Crossover: temp left-aligned / battery right-aligned
+    var DATE_GAP = 0;  // extra space between the day and date boxes
+    var DATE_DX = 0;   // shifts the date row / alert badge right
     var BOT_L = 26; var BOT_R = 150;
     var TEMP_Y = 78;   // below the round window's bezel; on the date text line without one
     var DATE_Y = 64;   // date row / alert badge box top
@@ -292,9 +295,9 @@ class InstinctFaceView extends WatchUi.WatchFace {
 
         dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 41, 20, 3);
         Lcd.textCenter(dc, DAYS[info.day_of_week], 28 + DATE_DX, DATE_Y + 3, 2);
-        dc.drawRoundedRectangle(51 + DATE_DX, DATE_Y, 63, 20, 3);
+        dc.drawRoundedRectangle(51 + DATE_DX + DATE_GAP, DATE_Y, 63, 20, 3);
         var md = info.day.format("%02d") + "." + info.month.format("%02d");   // EU: dd.mm
-        Lcd.textCenter(dc, md, 82 + DATE_DX, DATE_Y + 3, 2);
+        Lcd.textCenter(dc, md, 82 + DATE_DX + DATE_GAP, DATE_Y + 3, 2);
     }
 
     // Kyiv air-raid alert takes over the date row: "RED 0:42" (city, whole), "YEL" (city,
@@ -316,14 +319,14 @@ class InstinctFaceView extends WatchUi.WatchFace {
         }
         var sure = a[2] == 200 && a.size() > 3 && a[3] != null && now - (a[3] as Number) < 20 * 60;
         if (sure) {
-            dc.fillRoundedRectangle(8 + DATE_DX, DATE_Y, 106, 20, 3);
+            dc.fillRoundedRectangle(8 + DATE_DX, DATE_Y, 106 + DATE_GAP, 20, 3);
             dc.setColor(B, T);
-            Lcd.textCenter(dc, txt, 61 + DATE_DX, DATE_Y + 3, 2);
+            Lcd.textCenter(dc, txt, 61 + DATE_DX + DATE_GAP / 2, DATE_Y + 3, 2);
             dc.setColor(W, T);
         } else {
-            dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 106, 20, 3);
-            dc.drawRoundedRectangle(9 + DATE_DX, DATE_Y + 1, 104, 18, 3);
-            Lcd.textCenter(dc, txt, 61 + DATE_DX, DATE_Y + 3, 2);
+            dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 106 + DATE_GAP, 20, 3);
+            dc.drawRoundedRectangle(9 + DATE_DX, DATE_Y + 1, 104 + DATE_GAP, 18, 3);
+            Lcd.textCenter(dc, txt, 61 + DATE_DX + DATE_GAP / 2, DATE_Y + 3, 2);
         }
         return true;
     }
@@ -356,7 +359,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
         var bat = System.getSystemStats().battery.toNumber().toString();
         if (sub == null) {
             // Crossover: battery right of the hands' pivot, heart rate takes its bottom slot
-            Lcd.text(dc, bat + "%", PIVOT_R, TEMP_Y, 2);
+            Lcd.textRight(dc, bat + "%", PIVOT_R, TEMP_Y, 2);
             var hr = heartRateNum();
             Lcd.text(dc, "*" + (hr == null ? "--" : hr.toString()), BOT_L, BOT_Y, 2);
             Lcd.textRight(dc, aq, BOT_R, BOT_Y, 2);
@@ -561,7 +564,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
         // Big temperature only (scale 1 was unreadable on the real screen). y=75 keeps it
         // below the round window's bezel and above the minute digits (which start at 89).
         // The pixel icons stay in the code (ICONS/drawIcon) in case we bring them back at 2x.
-        if (sub == null) { Lcd.textRight(dc, s, PIVOT_L, TEMP_Y, 2); }   // left of the hands' pivot
+        if (sub == null) { Lcd.text(dc, s, PIVOT_L, TEMP_Y, 2); }        // left edge, beside the pivot
         else { Lcd.textCenter(dc, s, 143, TEMP_Y, 2); }
     }
 
