@@ -1,0 +1,43 @@
+<resources>
+    <string id="AppName">Svitlo Face</string>
+
+    <string id="None">—</string>
+    <string id="ProviderTitle">Outage schedule supplier (Графіки: YASNO)</string>
+    <string id="ProvKyiv">Київ (ДТЕК Київські електромережі)</string>
+    <string id="ProvDnem">Дніпро (ДнЕМ)</string>
+    <string id="ProvCek">Дніпро (ЦЕК)</string>
+    <string id="QueueTitle">Schedule queue (група), e.g. 1.1</string>
+    <string id="QueuePrompt">Queue as N.M</string>
+    <string id="SvitloBotTitle">СвітлоБот channel: actual power on/off. Назва каналу точки на карті svitlobot.in.ua, напр. svitlobot_… (Electricity data by СвітлоБот)</string>
+    <string id="SvitloBotPrompt">svitlobot_…, @name or t.me link</string>
+    <string id="AlertPlaceTitle">Air-raid alert area (Тривоги: NEPTUN — neptun.in.ua). Не є офіційною системою оповіщення</string>
+    <string id="ShowTimelineTitle">Show outage bar (hatched = scheduled, solid = actual)</string>
+
+    <string id="Pl1">Київ (місто)</string>
+    <string id="Pl2">Вінницька</string>
+    <string id="Pl3">Волинська</string>
+    <string id="Pl4">Дніпропетровська</string>
+    <string id="Pl5">Донецька</string>
+    <string id="Pl6">Житомирська</string>
+    <string id="Pl7">Закарпатська</string>
+    <string id="Pl8">Запорізька</string>
+    <string id="Pl9">Івано-Франківська</string>
+    <string id="Pl10">Київська</string>
+    <string id="Pl11">Кіровоградська</string>
+    <string id="Pl12">Луганська</string>
+    <string id="Pl13">Львівська</string>
+    <string id="Pl14">Миколаївська</string>
+    <string id="Pl15">Одеська</string>
+    <string id="Pl16">Полтавська</string>
+    <string id="Pl17">Рівненська</string>
+    <string id="Pl18">Сумська</string>
+    <string id="Pl19">Тернопільська</string>
+    <string id="Pl20">Харківська</string>
+    <string id="Pl21">Херсонська</string>
+    <string id="Pl22">Хмельницька</string>
+    <string id="Pl23">Черкаська</string>
+    <string id="Pl24">Чернівецька</string>
+    <string id="Pl25">Чернігівська</string>
+    <string id="Pl26">АР Крим</string>
+    <string id="Pl27">Севастополь</string>
+</resources>

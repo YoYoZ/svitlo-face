@@ -1,0 +1,12 @@
+<properties>
+    <property id="Provider" type="number">0</property>
+    <property id="Queue" type="string"></property>
+    <property id="SvitloBot" type="string"></property>
+    <property id="AlertPlace" type="number">0</property>
+    <property id="ShowTimeline" type="boolean">true</property>
+    <!-- hidden: grid voltage bounds (no voltage on the public API, kept for shared code) -->
+    <property id="VoltLow" type="number">207</property>
+    <property id="VoltHigh" type="number">253</property>
+    <!-- hidden: "lat,lon" rounded to ~1 km, written by the face, read by the background AQI fetch -->
+    <property id="Loc" type="string"></property>
+</properties>

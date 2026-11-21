@@ -1,0 +1,51 @@
+<settings>
+    <setting propertyKey="@Properties.Provider" title="@Strings.ProviderTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.None</listEntry>
+            <listEntry value="1">@Strings.ProvKyiv</listEntry>
+            <listEntry value="2">@Strings.ProvDnem</listEntry>
+            <listEntry value="3">@Strings.ProvCek</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Queue" title="@Strings.QueueTitle" prompt="@Strings.QueuePrompt">
+        <settingConfig type="alphaNumeric" />
+    </setting>
+    <setting propertyKey="@Properties.SvitloBot" title="@Strings.SvitloBotTitle" prompt="@Strings.SvitloBotPrompt">
+        <settingConfig type="alphaNumeric" />
+    </setting>
+    <setting propertyKey="@Properties.AlertPlace" title="@Strings.AlertPlaceTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.None</listEntry>
+            <listEntry value="1">@Strings.Pl1</listEntry>
+            <listEntry value="2">@Strings.Pl2</listEntry>
+            <listEntry value="3">@Strings.Pl3</listEntry>
+            <listEntry value="4">@Strings.Pl4</listEntry>
+            <listEntry value="5">@Strings.Pl5</listEntry>
+            <listEntry value="6">@Strings.Pl6</listEntry>
+            <listEntry value="7">@Strings.Pl7</listEntry>
+            <listEntry value="8">@Strings.Pl8</listEntry>
+            <listEntry value="9">@Strings.Pl9</listEntry>
+            <listEntry value="10">@Strings.Pl10</listEntry>
+            <listEntry value="11">@Strings.Pl11</listEntry>
+            <listEntry value="12">@Strings.Pl12</listEntry>
+            <listEntry value="13">@Strings.Pl13</listEntry>
+            <listEntry value="14">@Strings.Pl14</listEntry>
+            <listEntry value="15">@Strings.Pl15</listEntry>
+            <listEntry value="16">@Strings.Pl16</listEntry>
+            <listEntry value="17">@Strings.Pl17</listEntry>
+            <listEntry value="18">@Strings.Pl18</listEntry>
+            <listEntry value="19">@Strings.Pl19</listEntry>
+            <listEntry value="20">@Strings.Pl20</listEntry>
+            <listEntry value="21">@Strings.Pl21</listEntry>
+            <listEntry value="22">@Strings.Pl22</listEntry>
+            <listEntry value="23">@Strings.Pl23</listEntry>
+            <listEntry value="24">@Strings.Pl24</listEntry>
+            <listEntry value="25">@Strings.Pl25</listEntry>
+            <listEntry value="26">@Strings.Pl26</listEntry>
+            <listEntry value="27">@Strings.Pl27</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.ShowTimeline" title="@Strings.ShowTimelineTitle">
+        <settingConfig type="boolean" />
+    </setting>
+</settings>
