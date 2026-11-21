@@ -5,6 +5,8 @@ Crossover (Connect IQ; on the Crossover the real hands tell the time) for Ukrain
 the **scheduled** outages and what **actually** happened at your address, side by side,
 plus the air-raid alert for your area.
 
+**Install:** [Connect IQ Store](https://apps.garmin.com/apps/ba6f6596-14c0-44c5-bc33-d593c38bf0b1)
+
 > **Не є офіційною системою оповіщення.** Not an official warning system. Data arrives
 > every 5 minutes at best, through your phone. Never rely on it instead of sirens or
 > official alert apps.
