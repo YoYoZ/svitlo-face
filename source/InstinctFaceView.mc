@@ -50,8 +50,16 @@ class InstinctFaceView extends WatchUi.WatchFace {
             subCx = sub.x + sub.width / 2;
             subCy = sub.y + sub.height / 2;
             subR = sub.width / 2;
+        } else {
+            // no round window (Crossover): the top-right corner is free, so centre the power
+            // panel and the bar, and lift the temperature onto the date row's line
+            var cx = dc.getWidth() / 2;
+            PX = cx - PW / 2;
+            TL_X = cx - TL_W / 2;
+            TEMP_Y = 67;
         }
     }
+    var TEMP_Y = 78;   // below the round window's bezel; 67 (= date text line) without one
 
     function onUpdate(dc as Dc) as Void {
         dc.clearClip();
@@ -89,7 +97,8 @@ class InstinctFaceView extends WatchUi.WatchFace {
     // Stale data (>15 min) -> dotted frame instead of solid.
     // subscreen box is x113..175,y0..62 but its physical bezel hides ~12px more -> stay left of x~100
     // as wide as fits: the octagon's cut corner clips anything left of x~12 at this height
-    const PX = 12; const PY = 15; const PW = 87; const PH = 23;
+    // PX / TL_X / TEMP_Y move to the centre on watches without the round window (Crossover)
+    var PX = 12; const PY = 15; const PW = 87; const PH = 23;
 
     // One line, all at the big size ({/} = arrow down/up):
     //   PWR ON    outlined          grid fine
@@ -175,7 +184,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
     // 24h strip: -6h .. now .. +18h.  hatched = planned DTEK window, solid = actual outage,
     // triangle under the bar = now, tick under the bar = midnight. Text line = next planned window.
     // 6-hour window: 3 h back, now in the middle, 3 h ahead. Left edge = clock's left edge.
-    const TL_X = 8; const TL_Y = 42; const TL_W = 92; const TL_H = 10;
+    var TL_X = 8; const TL_Y = 42; const TL_W = 92; const TL_H = 10;
     const TL_BACK = 3 * 3600; const TL_SPAN = 6 * 3600;
 
     function drawTimeline(dc as Dc, now) as Void {
@@ -532,7 +541,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
         // Big temperature only (scale 1 was unreadable on the real screen). y=75 keeps it
         // below the round window's bezel and above the minute digits (which start at 89).
         // The pixel icons stay in the code (ICONS/drawIcon) in case we bring them back at 2x.
-        Lcd.textCenter(dc, s, 143, 78, 2);
+        Lcd.textCenter(dc, s, 143, TEMP_Y, 2);
     }
 
     function isNight(c) as Boolean {
