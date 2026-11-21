@@ -56,16 +56,18 @@ class InstinctFaceView extends WatchUi.WatchFace {
             // Spread over the whole round screen, each row as wide as the circle allows there:
             //   panel 12..35 | bar 42..52, 140 wide
             //   temp at the left edge . . . (hands' pivot) . . . battery at the right edge
-            //   [day] . . . [date] 112..132, boxes pushed apart | heart rate . . . AQI 142..156
+            //   [day] . . . [date] 104..124, boxes pushed apart | heart rate . . . AQI 131..145
+            //   (bottom row kept high: the circle is ~136 wide at y 145, only ~112 at y 156,
+            //    and "*142" + "AQI 42" needs ~120)
             var cx = dc.getWidth() / 2;
             PY = 12;
             PX = cx - PW / 2;
             TL_W = 140; TL_Y = 42;
             TL_X = cx - TL_W / 2;
-            DATE_Y = 112; DATE_DX = 12; DATE_GAP = 30;    // day 20..61, date 93..156
+            DATE_Y = 104; DATE_DX = 12; DATE_GAP = 30;    // day 20..61, date 93..156
             TEMP_Y = cx - 7;
             PIVOT_L = 12; PIVOT_R = 164;
-            BOT_Y = 142; BOT_L = 32; BOT_R = 144;         // circle is ~112 wide down there
+            BOT_Y = 131; BOT_L = 22; BOT_R = 154;
         }
     }
     var PIVOT_L = 70; var PIVOT_R = 106;   // Crossover: temp left-aligned / battery right-aligned
@@ -309,6 +311,8 @@ class InstinctFaceView extends WatchUi.WatchFace {
         var a = Application.Storage.getValue("al");
         if (DEMO == 5) { a = [3, now - 42 * 60, 200, now]; }
         if (DEMO == 6) { a = [1, now - 5 * 60, -104, now - 30 * 60]; }
+        if (DEMO == 10) { a = [2, now - 17 * 60, 200, now]; }
+        if (DEMO == 11) { a = [1, now - 8 * 60, 200, now]; }
         if (!(a instanceof Array) || a[0] == null || a[0] <= 0) { return false; }
         var lv = a[0] as Number;
         var txt = ALV[lv];
@@ -396,7 +400,8 @@ class InstinctFaceView extends WatchUi.WatchFace {
     // During an outage it shows the home battery instead: ring = SOC, centre = "87%".
     function drawSubscreen(dc as Dc, min as Number, p as Dictionary) as Void {
         if (sub == null) { return; }
-        if (p[:mode] == :out) { socGauge(dc, p[:soc]); return; }
+        // (home-battery ring only if a source ever reports SOC; SvitloBot is just on/off)
+        if (p[:mode] == :out && p[:soc] != null) { socGauge(dc, p[:soc]); return; }
         if (min != zonesMin) { zones = hrZones(); zonesMin = min; }
         var max = zones[zones.size() - 1];
         var hr = heartRateNum();
@@ -607,13 +612,16 @@ class InstinctFaceView extends WatchUi.WatchFace {
     }
 
     // Interprets the last background result. Keeps last good reading for up to 60 min.
-    // DEMO: 0 = real data, 1 = outage, 2 = low volts, 3 = high volts (for screenshots only)
+    // DEMO: 0 = real data, 1 = outage, 2 = low volts, 3 = high volts, 4 HR, 5 RED alert,
+    // 6 OBL (unconfirmed), 7 AQI, 8 temp, 9 grid OK, 10 YEL alert, 11 OBL alert.
+    // Screenshots only: tools\storeshots.ps1 switches several on at once in a throwaway build.
     const DEMO = 0;
 
     function powerState(now) as Dictionary {
-        if (DEMO == 1) { return {:mode => :out, :soc => 87, :since => now.value() - 83 * 60, :old => false}; }
+        if (DEMO == 1) { return {:mode => :out, :since => now.value() - 83 * 60, :old => false}; }
         if (DEMO == 2) { return {:mode => :grid, :v => 198, :old => false}; }
         if (DEMO == 3) { return {:mode => :grid, :v => 261, :old => false}; }
+        if (DEMO == 9) { return {:mode => :grid, :v => 231, :old => false}; }
         var raw = Application.Storage.getValue("pwr");
         if (!(raw instanceof Dictionary)) { return {:mode => :none, :why => "NO DATA"}; }
         var d = raw as Dictionary;
