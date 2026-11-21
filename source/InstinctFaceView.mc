@@ -53,19 +53,21 @@ class InstinctFaceView extends WatchUi.WatchFace {
         } else {
             // No round window and real hands (Crossover): no digital clock either. The rows
             // spread over the whole round screen, centred, with heart rate as its own row:
-            //   panel 22..45 | bar 55..65 (wider) | date + temp 80..100 | HR 109..123 | AQI 137
+            //   panel 18..41 | bar 48..58 (wider)
+            //   temp  (hands' pivot)  battery     on the centre line, y 81..95
+            //   date row 104..124 (centred) | heart rate + AQI 134..148
             var cx = dc.getWidth() / 2;
-            PY = 22;
+            PY = 18;
             PX = cx - PW / 2;
-            TL_W = 120; TL_Y = 55;
+            TL_W = 120; TL_Y = 48;
             TL_X = cx - TL_W / 2;
-            DATE_Y = 80;
-            TEMP_Y = DATE_Y + 3;
-            HR_Y = 109;
-            BOT_Y = 137; BOT_L = 32; BOT_R = 144;   // pulled in from the round edge
+            DATE_Y = 104; DATE_DX = cx - 53 - 8;          // row is 106 px wide from x 8
+            TEMP_Y = cx - 7;
+            BOT_Y = 134; BOT_L = 32; BOT_R = 144;         // pulled in from the round edge
         }
     }
-    var HR_Y = 104;    // heart-rate row (only without the round window)
+    const PIVOT_L = 70; const PIVOT_R = 106;   // Crossover: clear of the hands' centre cap
+    var DATE_DX = 0;   // shifts the date row / alert badge right (centred without the window)
     var BOT_L = 26; var BOT_R = 150;
     var TEMP_Y = 78;   // below the round window's bezel; on the date text line without one
     var DATE_Y = 64;   // date row / alert badge box top
@@ -87,13 +89,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
         drawStatusPanel(dc, p, now);
         drawTimeline(dc, now);
         drawDateRow(dc, info, settings);
-        if (sub != null) {
-            drawTime(dc, clock, settings);
-        } else {
-            // Crossover: its real hands tell the time; heart rate gets the clock's place
-            var hr = heartRateNum();
-            Lcd.textCenter(dc, "* " + (hr == null ? "--" : hr.toString()), dc.getWidth() / 2, HR_Y, 2);
-        }
+        if (sub != null) { drawTime(dc, clock, settings); }   // Crossover: real hands tell the time
         drawBottom(dc, settings);
         drawSubscreen(dc, clock.min, p);
     }
@@ -294,11 +290,11 @@ class InstinctFaceView extends WatchUi.WatchFace {
         drawWeather(dc, st);
         if (drawAlert(dc)) { return; }
 
-        dc.drawRoundedRectangle(8, DATE_Y, 41, 20, 3);
-        Lcd.textCenter(dc, DAYS[info.day_of_week], 28, DATE_Y + 3, 2);
-        dc.drawRoundedRectangle(51, DATE_Y, 63, 20, 3);
+        dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 41, 20, 3);
+        Lcd.textCenter(dc, DAYS[info.day_of_week], 28 + DATE_DX, DATE_Y + 3, 2);
+        dc.drawRoundedRectangle(51 + DATE_DX, DATE_Y, 63, 20, 3);
         var md = info.day.format("%02d") + "." + info.month.format("%02d");   // EU: dd.mm
-        Lcd.textCenter(dc, md, 82, DATE_Y + 3, 2);
+        Lcd.textCenter(dc, md, 82 + DATE_DX, DATE_Y + 3, 2);
     }
 
     // Kyiv air-raid alert takes over the date row: "RED 0:42" (city, whole), "YEL" (city,
@@ -320,14 +316,14 @@ class InstinctFaceView extends WatchUi.WatchFace {
         }
         var sure = a[2] == 200 && a.size() > 3 && a[3] != null && now - (a[3] as Number) < 20 * 60;
         if (sure) {
-            dc.fillRoundedRectangle(8, DATE_Y, 106, 20, 3);
+            dc.fillRoundedRectangle(8 + DATE_DX, DATE_Y, 106, 20, 3);
             dc.setColor(B, T);
-            Lcd.textCenter(dc, txt, 61, DATE_Y + 3, 2);
+            Lcd.textCenter(dc, txt, 61 + DATE_DX, DATE_Y + 3, 2);
             dc.setColor(W, T);
         } else {
-            dc.drawRoundedRectangle(8, DATE_Y, 106, 20, 3);
-            dc.drawRoundedRectangle(9, DATE_Y + 1, 104, 18, 3);
-            Lcd.textCenter(dc, txt, 61, DATE_Y + 3, 2);
+            dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 106, 20, 3);
+            dc.drawRoundedRectangle(9 + DATE_DX, DATE_Y + 1, 104, 18, 3);
+            Lcd.textCenter(dc, txt, 61 + DATE_DX, DATE_Y + 3, 2);
         }
         return true;
     }
@@ -358,6 +354,14 @@ class InstinctFaceView extends WatchUi.WatchFace {
         var q = airQuality();
         var aq = q.length() < 3 ? "AQI " + q : "AQI" + q;    // 3-digit AQI needs the room
         var bat = System.getSystemStats().battery.toNumber().toString();
+        if (sub == null) {
+            // Crossover: battery right of the hands' pivot, heart rate takes its bottom slot
+            Lcd.text(dc, bat + "%", PIVOT_R, TEMP_Y, 2);
+            var hr = heartRateNum();
+            Lcd.text(dc, "*" + (hr == null ? "--" : hr.toString()), BOT_L, BOT_Y, 2);
+            Lcd.textRight(dc, aq, BOT_R, BOT_Y, 2);
+            return;
+        }
         // "AQI105" + "100%" would collide: drop the % sign then
         if (Lcd.textWidth(aq, 2) + Lcd.textWidth(bat + "%", 2) + 10 <= BOT_R - BOT_L) { bat += "%"; }
         Lcd.text(dc, aq, BOT_L, BOT_Y, 2);
@@ -557,7 +561,8 @@ class InstinctFaceView extends WatchUi.WatchFace {
         // Big temperature only (scale 1 was unreadable on the real screen). y=75 keeps it
         // below the round window's bezel and above the minute digits (which start at 89).
         // The pixel icons stay in the code (ICONS/drawIcon) in case we bring them back at 2x.
-        Lcd.textCenter(dc, s, 143, TEMP_Y, 2);
+        if (sub == null) { Lcd.textRight(dc, s, PIVOT_L, TEMP_Y, 2); }   // left of the hands' pivot
+        else { Lcd.textCenter(dc, s, 143, TEMP_Y, 2); }
     }
 
     function isNight(c) as Boolean {
