@@ -51,15 +51,25 @@ class InstinctFaceView extends WatchUi.WatchFace {
             subCy = sub.y + sub.height / 2;
             subR = sub.width / 2;
         } else {
-            // no round window (Crossover): the top-right corner is free, so centre the power
-            // panel and the bar, and lift the temperature onto the date row's line
+            // No round window and real hands (Crossover): no digital clock either. The rows
+            // spread over the whole round screen, centred, with heart rate as its own row:
+            //   panel 22..45 | bar 55..65 (wider) | date + temp 80..100 | HR 109..123 | AQI 137
             var cx = dc.getWidth() / 2;
+            PY = 22;
             PX = cx - PW / 2;
+            TL_W = 120; TL_Y = 55;
             TL_X = cx - TL_W / 2;
-            TEMP_Y = 67;
+            DATE_Y = 80;
+            TEMP_Y = DATE_Y + 3;
+            HR_Y = 109;
+            BOT_Y = 137; BOT_L = 32; BOT_R = 144;   // pulled in from the round edge
         }
     }
-    var TEMP_Y = 78;   // below the round window's bezel; 67 (= date text line) without one
+    var HR_Y = 104;    // heart-rate row (only without the round window)
+    var BOT_L = 26; var BOT_R = 150;
+    var TEMP_Y = 78;   // below the round window's bezel; on the date text line without one
+    var DATE_Y = 64;   // date row / alert badge box top
+    var BOT_Y = 151;   // AQI + battery row
 
     function onUpdate(dc as Dc) as Void {
         dc.clearClip();
@@ -77,7 +87,13 @@ class InstinctFaceView extends WatchUi.WatchFace {
         drawStatusPanel(dc, p, now);
         drawTimeline(dc, now);
         drawDateRow(dc, info, settings);
-        drawTime(dc, clock, settings);
+        if (sub != null) {
+            drawTime(dc, clock, settings);
+        } else {
+            // Crossover: its real hands tell the time; heart rate gets the clock's place
+            var hr = heartRateNum();
+            Lcd.textCenter(dc, "* " + (hr == null ? "--" : hr.toString()), dc.getWidth() / 2, HR_Y, 2);
+        }
         drawBottom(dc, settings);
         drawSubscreen(dc, clock.min, p);
     }
@@ -98,7 +114,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
     // subscreen box is x113..175,y0..62 but its physical bezel hides ~12px more -> stay left of x~100
     // as wide as fits: the octagon's cut corner clips anything left of x~12 at this height
     // PX / TL_X / TEMP_Y move to the centre on watches without the round window (Crossover)
-    var PX = 12; const PY = 15; const PW = 87; const PH = 23;
+    var PX = 12; var PY = 15; const PW = 87; const PH = 23;
 
     // One line, all at the big size ({/} = arrow down/up):
     //   PWR ON    outlined          grid fine
@@ -184,7 +200,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
     // 24h strip: -6h .. now .. +18h.  hatched = planned DTEK window, solid = actual outage,
     // triangle under the bar = now, tick under the bar = midnight. Text line = next planned window.
     // 6-hour window: 3 h back, now in the middle, 3 h ahead. Left edge = clock's left edge.
-    var TL_X = 8; const TL_Y = 42; const TL_W = 92; const TL_H = 10;
+    var TL_X = 8; var TL_Y = 42; var TL_W = 92; const TL_H = 10;
     const TL_BACK = 3 * 3600; const TL_SPAN = 6 * 3600;
 
     function drawTimeline(dc as Dc, now) as Void {
@@ -278,11 +294,11 @@ class InstinctFaceView extends WatchUi.WatchFace {
         drawWeather(dc, st);
         if (drawAlert(dc)) { return; }
 
-        dc.drawRoundedRectangle(8, 64, 41, 20, 3);
-        Lcd.textCenter(dc, DAYS[info.day_of_week], 28, 67, 2);
-        dc.drawRoundedRectangle(51, 64, 63, 20, 3);
+        dc.drawRoundedRectangle(8, DATE_Y, 41, 20, 3);
+        Lcd.textCenter(dc, DAYS[info.day_of_week], 28, DATE_Y + 3, 2);
+        dc.drawRoundedRectangle(51, DATE_Y, 63, 20, 3);
         var md = info.day.format("%02d") + "." + info.month.format("%02d");   // EU: dd.mm
-        Lcd.textCenter(dc, md, 82, 67, 2);
+        Lcd.textCenter(dc, md, 82, DATE_Y + 3, 2);
     }
 
     // Kyiv air-raid alert takes over the date row: "RED 0:42" (city, whole), "YEL" (city,
@@ -304,14 +320,14 @@ class InstinctFaceView extends WatchUi.WatchFace {
         }
         var sure = a[2] == 200 && a.size() > 3 && a[3] != null && now - (a[3] as Number) < 20 * 60;
         if (sure) {
-            dc.fillRoundedRectangle(8, 64, 106, 20, 3);
+            dc.fillRoundedRectangle(8, DATE_Y, 106, 20, 3);
             dc.setColor(B, T);
-            Lcd.textCenter(dc, txt, 61, 67, 2);
+            Lcd.textCenter(dc, txt, 61, DATE_Y + 3, 2);
             dc.setColor(W, T);
         } else {
-            dc.drawRoundedRectangle(8, 64, 106, 20, 3);
-            dc.drawRoundedRectangle(9, 65, 104, 18, 3);
-            Lcd.textCenter(dc, txt, 61, 67, 2);
+            dc.drawRoundedRectangle(8, DATE_Y, 106, 20, 3);
+            dc.drawRoundedRectangle(9, DATE_Y + 1, 104, 18, 3);
+            Lcd.textCenter(dc, txt, 61, DATE_Y + 3, 2);
         }
         return true;
     }
@@ -343,9 +359,9 @@ class InstinctFaceView extends WatchUi.WatchFace {
         var aq = q.length() < 3 ? "AQI " + q : "AQI" + q;    // 3-digit AQI needs the room
         var bat = System.getSystemStats().battery.toNumber().toString();
         // "AQI105" + "100%" would collide: drop the % sign then
-        if (Lcd.textWidth(aq, 2) + Lcd.textWidth(bat + "%", 2) + 10 <= 124) { bat += "%"; }
-        Lcd.text(dc, aq, 26, 151, 2);
-        Lcd.textRight(dc, bat, 150, 151, 2);
+        if (Lcd.textWidth(aq, 2) + Lcd.textWidth(bat + "%", 2) + 10 <= BOT_R - BOT_L) { bat += "%"; }
+        Lcd.text(dc, aq, BOT_L, BOT_Y, 2);
+        Lcd.textRight(dc, bat, BOT_R, BOT_Y, 2);
     }
 
     function bodyBattery() as String {

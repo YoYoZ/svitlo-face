@@ -63,7 +63,7 @@ module Lcd {
     // look). Same 5x7 grid, but drawn as 2-px strokes between grid points: diagonals step
     // by 1 px, corners are chamfered like the clock's segments. Cell 10x14, advance 12.
     // Glyph = polylines of "xy" grid digit pairs (x 0..4, y 0..6), separated by spaces.
-    const SCHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ%#-?!/+&~{}";
+    const SCHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ%#-?!/+&~{}*";
     const SGLYPHS = [
         "103041453616050110", "112026 1636", "01103041420646",
         "0110304142334445361605 1333", "36300444", "40000003334445361605",
@@ -86,7 +86,8 @@ module Lcd {
         "30133316",                     // & = bolt (power)
         "30133316 0046",                // ~ = bolt struck out (power off)
         "2026 042644",                  // { = arrow down (volts low)
-        "2026 022042"                   // } = arrow up (volts high)
+        "2026 022042",                  // } = arrow up (volts high)
+        "260301102130414326"            // * = heart (outline)
     ];
     const NARROW = ":. ";               // half-width cells
 
