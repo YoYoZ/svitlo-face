@@ -9,7 +9,14 @@ $root = (Resolve-Path "$PSScriptRoot\..").Path
 $bin = "$root\bin"; $out = "$root\store"
 New-Item -ItemType Directory -Force $out | Out-Null
 $env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory | Select-Object -First 1).FullName
-$sdk = (Get-Content "$env:APPDATA\Garmin\ConnectIQ\current-sdk.cfg").Trim().TrimEnd('\')
+$sdk = $null
+$cfg = "$env:APPDATA\Garmin\ConnectIQ\current-sdk.cfg"
+if (Test-Path $cfg) { $sdk = (Get-Content $cfg).Trim().TrimEnd('\') }
+if (-not $sdk -or -not (Test-Path "$sdk\bin\monkeyc.bat")) {
+    $sdk = Get-ChildItem "$env:APPDATA\Garmin\ConnectIQ\Sdks" -Directory -ErrorAction SilentlyContinue |
+           Sort-Object Name | Select-Object -Last 1 | ForEach-Object { $_.FullName }
+}
+if (-not $sdk) { Write-Error "Connect IQ SDK not found (install it with the SDK Manager)"; exit 1 }
 $env:PATH = "$sdk\bin;$env:JAVA_HOME\bin;$env:PATH"
 Add-Type -AssemblyName System.Drawing
 
