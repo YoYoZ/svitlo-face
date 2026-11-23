@@ -67,8 +67,9 @@ try {
         $w = [int]$k[2] * $zf; $h = [int]$k[3] * $zf
         $z = New-Object Drawing.Bitmap($w, $h); $g = [Drawing.Graphics]::FromImage($z)
         $g.InterpolationMode = 'NearestNeighbor'; $g.PixelOffsetMode = 'Half'; $g.DrawImage($cl, 0, 0, $w, $h); $g.Dispose()
-        $z.Save("$out\$($c.d)-$($c.n).png"); $im.Dispose(); $cl.Dispose(); $z.Dispose()
-        "$out\$($c.d)-$($c.n).png"
+        $dst = if ($c.n -eq "aod") { $bin } else { $out }      # always-on test shot: not for the store
+        $z.Save("$dst\$($c.d)-$($c.n).png"); $im.Dispose(); $cl.Dispose(); $z.Dispose()
+        "$dst\$($c.d)-$($c.n).png"
     }
 } finally {
     [IO.File]::WriteAllText($view, $v0)
