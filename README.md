@@ -1,7 +1,7 @@
 # Svitlo Face
 
 A retro LCD watch face for Garmin Instinct 2 / 2X / 3 Solar 45mm / E 45mm and Instinct
-Crossover (Connect IQ; on the Crossover the real hands tell the time) for Ukraine's power outages:
+Crossover / Crossover AMOLED (Connect IQ; on the Crossovers the real hands tell the time; the AMOLED one is in colour) for Ukraine's power outages:
 the **scheduled** outages and what **actually** happened at your address, side by side,
 plus the air-raid alert for your area.
 

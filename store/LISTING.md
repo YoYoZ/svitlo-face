@@ -2,7 +2,7 @@
 
 **Title:** Svitlo Face
 **Category:** Watch Faces
-**Devices:** Instinct 2, Instinct 2X, Instinct 3 Solar 45mm, Instinct E 45mm, Instinct Crossover
+**Devices:** Instinct 2, Instinct 2X, Instinct 3 Solar 45mm, Instinct E 45mm, Instinct Crossover, Instinct Crossover AMOLED
 **Icon:** `resources/drawables/launcher_icon.png` (62×62); the Crossover build uses
 `resources-instinctcrossover/drawables/launcher_icon.png` (26×26)
 **Screenshots:** this folder: `instinct2-*.png`, `instinctcrossover-*.png` (demo data only;

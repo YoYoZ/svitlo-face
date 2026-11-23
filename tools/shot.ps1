@@ -2,7 +2,7 @@
 # Uses PrintWindow, so it works even when other windows cover the simulator
 # and never steals focus from whatever you're doing.
 # Usage: powershell -NoProfile -File tools\shot.ps1 [-Out path.png]
-param([string]$Out = "$PSScriptRoot\..\bin\sim.png")
+param([string]$Out = "$PSScriptRoot\..\bin\sim.png", [int]$MinHeight = 0)   # MinHeight: grow the window first (tall device skins)
 Add-Type -AssemblyName System.Drawing
 Add-Type @"
 using System; using System.Runtime.InteropServices;
@@ -13,6 +13,7 @@ public class W32 {
   [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
   [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+  [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr a, int x, int y, int cx, int cy, uint f);
 }
 "@
 [W32]::SetProcessDPIAware() | Out-Null
@@ -23,6 +24,11 @@ if ([W32]::IsIconic($h)) { [W32]::ShowWindow($h, 4) | Out-Null; Start-Sleep -Mil
 $r = New-Object W32+RECT
 [W32]::GetWindowRect($h, [ref]$r) | Out-Null
 $w = $r.R - $r.L; $hgt = $r.B - $r.T
+if ($MinHeight -gt $hgt) {
+    [W32]::SetWindowPos($h, [IntPtr]::Zero, 0, 0, $w, $MinHeight, 0x0016) | Out-Null   # NOMOVE|NOZORDER|NOACTIVATE
+    Start-Sleep -Milliseconds 1500
+    [W32]::GetWindowRect($h, [ref]$r) | Out-Null; $w = $r.R - $r.L; $hgt = $r.B - $r.T
+}
 $bmp = [System.Drawing.Bitmap]::new($w, $hgt)
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $hdc = $g.GetHdc()

@@ -1,1 +1,5 @@
 project.manifest = manifest.xml
+
+# Screen.mc: MIP draws straight to the screen; the AMOLED build draws at half size and scales up
+base.sourcePath = source;source-mip
+instinctcrossoveramoled.sourcePath = source;source-amoled

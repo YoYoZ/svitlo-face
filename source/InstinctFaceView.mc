@@ -59,16 +59,50 @@ class InstinctFaceView extends WatchUi.WatchFace {
             //   [day] . . . [date] 104..124, boxes pushed apart | heart rate . . . AQI 131..145
             //   (bottom row kept high: the circle is ~136 wide at y 145, only ~112 at y 156,
             //    and "*142" + "AQI 42" needs ~120)
-            var cx = dc.getWidth() / 2;
-            PY = 12;
+            // AMOLED: drawn at 195 px (Screen.size) -> the same layout, shifted by o to stay centred
+            var w = Screen.size(dc);
+            var cx = w / 2;
+            var o = (w - 176) / 2;
+            PY = 12 + o;
             PX = cx - PW / 2;
-            TL_W = 140; TL_Y = 42;
+            TL_W = 140; TL_Y = 42 + o;
             TL_X = cx - TL_W / 2;
-            DATE_Y = 104; DATE_DX = 12; DATE_GAP = 30;    // day 20..61, date 93..156
+            // the round 195 px screen has room below: the lower rows go down a bit more
+            var ob = o * 2;
+            DATE_Y = 104 + ob; DATE_DX = 12 + o; DATE_GAP = 30;   // day 20..61, date 93..156
             TEMP_Y = cx - 7;
-            PIVOT_L = 12; PIVOT_R = 164;
-            BOT_Y = 131; BOT_L = 22; BOT_R = 154;
+            PIVOT_L = 12 + o; PIVOT_R = 164 + o;
+            BOT_Y = 131 + ob; BOT_L = 22 + o; BOT_R = 154 + o;
         }
+        if (Screen.COLOR) {
+            C_DIM = 0x707070; C_ON = 0x33DD66; C_BAD = 0xFF4422; C_WARN = 0xFFAA00;
+            C_PLAN = 0xFFAA00; C_FACT = 0xFF4422; C_TEMP = 0x66CCFF; C_HEART = 0xFF3355;
+            C_AL = [W, 0xFF8800, 0xFFDD00, 0xFF2222];     // -, OBL, YEL, RED
+        }
+    }
+
+    // Colours (AMOLED only; on MIP everything stays white on black)
+    var C_DIM = W;     // frames, ticks
+    var C_ON = W;      // PWR ON
+    var C_BAD = W;     // OFF (outage) panel
+    var C_WARN = W;    // voltage out of range
+    var C_PLAN = W;    // scheduled outage hatch
+    var C_FACT = W;    // actual outage
+    var C_TEMP = W;
+    var C_HEART = W;
+    var C_AL = [W, W, W, W];
+
+    // European AQI band colours (good .. extremely poor)
+    function aqColor(q as String) as Number {
+        if (!Screen.COLOR || q.equals("--")) { return W; }
+        var v = q.toNumber();
+        if (v == null) { return W; }
+        if (v <= 20) { return 0x33DD66; }
+        if (v <= 40) { return 0x99DD33; }
+        if (v <= 60) { return 0xFFDD00; }
+        if (v <= 80) { return 0xFF8800; }
+        if (v <= 100) { return 0xFF3333; }
+        return 0xCC44FF;
     }
     var PIVOT_L = 70; var PIVOT_R = 106;   // Crossover: temp left-aligned / battery right-aligned
     var DATE_GAP = 0;  // extra space between the day and date boxes
@@ -79,6 +113,8 @@ class InstinctFaceView extends WatchUi.WatchFace {
     var BOT_Y = 151;   // AQI + battery row
 
     function onUpdate(dc as Dc) as Void {
+        var screen = dc;
+        dc = Screen.begin(dc);        // AMOLED: the half-size off-screen bitmap
         dc.clearClip();
         dc.setColor(W, B);
         dc.clear();
@@ -91,12 +127,39 @@ class InstinctFaceView extends WatchUi.WatchFace {
         var loc = getLocation();
 
         var p = powerState(now);
+        if (!awake && (settings has :requiresBurnInProtection) && settings.requiresBurnInProtection) {
+            drawAlwaysOn(dc, p, now, clock.min);
+            Screen.finish(screen);
+            return;
+        }
         drawStatusPanel(dc, p, now);
         drawTimeline(dc, now);
         drawDateRow(dc, info, settings);
         if (sub != null) { drawTime(dc, clock, settings); }   // Crossover: real hands tell the time
         drawBottom(dc, settings);
         drawSubscreen(dc, clock.min, p);
+        Screen.finish(screen);
+    }
+
+    // AMOLED always-on: the physical hands tell the time, so only the power state and an
+    // active alert, dimmed, and nudged by a pixel each minute against burn-in.
+    function drawAlwaysOn(dc as Dc, p as Dictionary, now, min as Number) as Void {
+        var dx = (min % 3) - 1; var dy = ((min / 3) % 3) - 1;
+        var cx = Screen.size(dc) / 2 + dx;
+        var s = "PWR ??"; var col = 0x505050;
+        if (p[:mode] == :out) {
+            var mins = p[:since] == null ? 0 : (now.value() - p[:since]) / 60;
+            s = "OFF " + (mins < 600 ? hm(mins) : (mins / 60) + "H"); col = 0x992211;
+        } else if (p[:mode] == :grid) {
+            s = "PWR ON"; col = 0x1E7A3C;
+        }
+        dc.setColor(col, T);
+        Lcd.textCenter(dc, s, cx, PY + 5 + dy, 2);
+        var a = Application.Storage.getValue("al");
+        if (a instanceof Array && a[0] != null && a[0] > 0 && a[0] < ALV.size()) {
+            dc.setColor([0, 0x994400, 0x998800, 0x991111][a[0] as Number], T);   // dim OBL / YEL / RED
+            Lcd.textCenter(dc, ALV[a[0] as Number], cx, DATE_Y + 3 + dy, 2);
+        }
     }
 
     // ---------------- panels ----------------
@@ -125,13 +188,13 @@ class InstinctFaceView extends WatchUi.WatchFace {
     function drawStatusPanel(dc as Dc, p as Dictionary, now) as Void {
         var bad = configProblem();
         if (bad != null) {
-            frame(dc, true);
-            panelText(dc, bad);
+            dc.setColor(C_DIM, T); frame(dc, true);
+            dc.setColor(W, T); panelText(dc, bad);
             return;
         }
         if (p[:mode] == :none) {
-            frame(dc, true);
-            panelText(dc, "PWR ??");
+            dc.setColor(C_DIM, T); frame(dc, true);
+            dc.setColor(W, T); panelText(dc, "PWR ??");
             return;
         }
         var v = p[:v] == null ? -1 : p[:v].toNumber();
@@ -140,14 +203,16 @@ class InstinctFaceView extends WatchUi.WatchFace {
 
         if (p[:mode] == :out) {
             var mins = p[:since] == null ? 0 : (now.value() - p[:since]) / 60;
-            alertPanel(dc, "OFF " + (mins < 600 ? hm(mins) : (mins / 60) + "H"));
+            alertPanel(dc, "OFF " + (mins < 600 ? hm(mins) : (mins / 60) + "H"), C_BAD);
         } else if (v >= 0 && lo != null && v < lo) {
-            alertPanel(dc, "{" + v + "V");
+            alertPanel(dc, "{" + v + "V", C_WARN);
         } else if (v >= 0 && hi != null && v > hi) {
-            alertPanel(dc, "}" + v + "V");
+            alertPanel(dc, "}" + v + "V", C_WARN);
         } else {
+            dc.setColor(C_ON, T);
             frame(dc, p[:old]);
             panelText(dc, "PWR ON");
+            dc.setColor(W, T);
         }
     }
 
@@ -172,8 +237,8 @@ class InstinctFaceView extends WatchUi.WatchFace {
     }
 
     // inverted panel = something's wrong
-    function alertPanel(dc as Dc, s as String) as Void {
-        dc.setColor(W, T);
+    function alertPanel(dc as Dc, s as String, col as Number) as Void {
+        dc.setColor(col, T);
         dc.fillRoundedRectangle(PX, PY, PW, PH, 3);
         dc.setColor(B, T);
         panelText(dc, s);
@@ -214,7 +279,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
                  "fa" => [[n - 2 * 3600, n - 3600 - 1200]],
                  "nx" => [n + 3600, n + 5 * 3600], "sv" => "ok", "kc" => 200};
         }
-        dc.setColor(W, T);
+        dc.setColor(C_DIM, T);
         if (d instanceof Dictionary && d["em"] == true) {
             // emergency outages today: the schedule doesn't apply -> dotted outline
             for (var x = TL_X; x < TL_X + TL_W; x += 2) { dc.drawPoint(x, TL_Y); dc.drawPoint(x, TL_Y + TL_H - 1); }
@@ -225,14 +290,17 @@ class InstinctFaceView extends WatchUi.WatchFace {
 
         if (d instanceof Dictionary) {
             var pl = d["pl"]; var fa = d["fa"];
+            dc.setColor(C_PLAN, T);
             if (pl instanceof Array) {
                 for (var i = 0; i < pl.size(); i++) { hatch(dc, tx(pl[i][0], t0), tx(pl[i][1], t0)); }
             }
+            dc.setColor(C_FACT, T);
             if (fa instanceof Array) {
                 for (var i = 0; i < fa.size(); i++) { solid(dc, tx(fa[i][0], t0), tx(fa[i][1], t0)); }
             }
             if (d["og"] == true && d["os"] != null) { solid(dc, tx(d["os"], t0), tx(n, t0)); }
         }
+        dc.setColor(C_DIM, T);
         // hourly ticks under the bar (midnight gets a longer one)
         var h0 = (t0 / 3600 + 1) * 3600;
         for (var h = h0; h < t0 + TL_SPAN; h += 3600) {
@@ -241,6 +309,7 @@ class InstinctFaceView extends WatchUi.WatchFace {
             dc.drawLine(hx, TL_Y + TL_H, hx, TL_Y + TL_H + (midnight ? 4 : 2));
         }
         // now marker
+        dc.setColor(W, T);
         var nx = tx(n, t0);
         dc.fillPolygon([[nx, TL_Y + TL_H + 1], [nx - 3, TL_Y + TL_H + 4], [nx + 3, TL_Y + TL_H + 4]]);
         // (no text line under the bar any more: the bar itself shows the plan)
@@ -295,9 +364,11 @@ class InstinctFaceView extends WatchUi.WatchFace {
         drawWeather(dc, st);
         if (drawAlert(dc)) { return; }
 
+        dc.setColor(C_DIM, T);
         dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 41, 20, 3);
-        Lcd.textCenter(dc, DAYS[info.day_of_week], 28 + DATE_DX, DATE_Y + 3, 2);
         dc.drawRoundedRectangle(51 + DATE_DX + DATE_GAP, DATE_Y, 63, 20, 3);
+        dc.setColor(W, T);
+        Lcd.textCenter(dc, DAYS[info.day_of_week], 28 + DATE_DX, DATE_Y + 3, 2);
         var md = info.day.format("%02d") + "." + info.month.format("%02d");   // EU: dd.mm
         Lcd.textCenter(dc, md, 82 + DATE_DX + DATE_GAP, DATE_Y + 3, 2);
     }
@@ -322,16 +393,17 @@ class InstinctFaceView extends WatchUi.WatchFace {
             txt += " " + (m < 600 ? (m / 60) + ":" + (m % 60).format("%02d") : (m / 60) + "H");
         }
         var sure = a[2] == 200 && a.size() > 3 && a[3] != null && now - (a[3] as Number) < 20 * 60;
+        dc.setColor(C_AL[lv], T);
         if (sure) {
             dc.fillRoundedRectangle(8 + DATE_DX, DATE_Y, 106 + DATE_GAP, 20, 3);
             dc.setColor(B, T);
             Lcd.textCenter(dc, txt, 61 + DATE_DX + DATE_GAP / 2, DATE_Y + 3, 2);
-            dc.setColor(W, T);
         } else {
             dc.drawRoundedRectangle(8 + DATE_DX, DATE_Y, 106 + DATE_GAP, 20, 3);
             dc.drawRoundedRectangle(9 + DATE_DX, DATE_Y + 1, 104 + DATE_GAP, 18, 3);
             Lcd.textCenter(dc, txt, 61 + DATE_DX + DATE_GAP / 2, DATE_Y + 3, 2);
         }
+        dc.setColor(W, T);
         return true;
     }
 
@@ -365,8 +437,13 @@ class InstinctFaceView extends WatchUi.WatchFace {
             // Crossover: battery right of the hands' pivot, heart rate takes its bottom slot
             Lcd.textRight(dc, bat + "%", PIVOT_R, TEMP_Y, 2);
             var hr = heartRateNum();
-            Lcd.text(dc, "*" + (hr == null ? "--" : hr.toString()), BOT_L, BOT_Y, 2);
+            dc.setColor(C_HEART, T);
+            Lcd.text(dc, "*", BOT_L, BOT_Y, 2);
+            dc.setColor(W, T);
+            Lcd.text(dc, hr == null ? "--" : hr.toString(), BOT_L + 12, BOT_Y, 2);
+            dc.setColor(aqColor(q), T);
             Lcd.textRight(dc, aq, BOT_R, BOT_Y, 2);
+            dc.setColor(W, T);
             return;
         }
         // "AQI105" + "100%" would collide: drop the % sign then
@@ -569,7 +646,9 @@ class InstinctFaceView extends WatchUi.WatchFace {
         // Big temperature only (scale 1 was unreadable on the real screen). y=75 keeps it
         // below the round window's bezel and above the minute digits (which start at 89).
         // The pixel icons stay in the code (ICONS/drawIcon) in case we bring them back at 2x.
-        if (sub == null) { Lcd.text(dc, s, PIVOT_L, TEMP_Y, 2); }        // left edge, beside the pivot
+        if (sub == null) {                                               // left edge, beside the pivot
+            dc.setColor(C_TEMP, T); Lcd.text(dc, s, PIVOT_L, TEMP_Y, 2); dc.setColor(W, T);
+        }
         else { Lcd.textCenter(dc, s, 143, TEMP_Y, 2); }
     }
 
