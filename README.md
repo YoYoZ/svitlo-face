@@ -33,7 +33,7 @@ plus the air-raid alert for your area.
 |---|---|
 | Outage schedule supplier | Whose schedule to show: Київ (ДТЕК), Дніпро (ДнЕМ), Дніпро (ЦЕК) |
 | Schedule queue | Your queue as `N.M` |
-| СвітлоБот channel | The channel of a point on the svitlobot.in.ua map near you: actual on/off |
+| СвітлоБот channel | The Telegram channel of a СвітлоБот point near you (e.g. `svitlobot_xxx`, also hidden points): actual on/off |
 | Air-raid alert area | Київ (city) or an oblast |
 
 There is no account and no sign-up. The settings are sent with every request; the server
@@ -42,7 +42,7 @@ stores nothing about you.
 ## Data sources
 
 - Графіки: **YASNO**
-- Electricity data by **СвітлоБот** (svitlobot.in.ua), with thanks
+- Electricity data by **СвітлоБот** (svitlobot.in.ua), read from the public Telegram channel of the point you choose, with thanks
 - Тривоги: **NEPTUN** — neptun.in.ua
 - Air quality: **Open-Meteo** (open-meteo.com)
 

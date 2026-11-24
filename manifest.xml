@@ -1,5 +1,5 @@
 ﻿<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
-    <iq:application id="0cc7c47d74f142509111be40463b7f4b" type="watchface" name="@Strings.AppName" entry="InstinctFaceApp" version="1.1.0" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0">
+    <iq:application id="0cc7c47d74f142509111be40463b7f4b" type="watchface" name="@Strings.AppName" entry="InstinctFaceApp" version="1.1.1" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0">
         <iq:products>
             <!-- 176x176 MIP with the 62 px round window: the layout is drawn for exactly this -->
             <iq:product id="instinct2" />
@@ -14,6 +14,7 @@
         <iq:permissions>
             <iq:uses-permission id="Background"/>
             <iq:uses-permission id="Communications"/>
+            <iq:uses-permission id="Positioning"/>
             <iq:uses-permission id="UserProfile"/>
             <iq:uses-permission id="SensorHistory"/>
         </iq:permissions>

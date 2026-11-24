@@ -15,8 +15,8 @@ settings you entered in Garmin Connect:
 - the СвітлоБот channel you chose,
 - the air-raid alert area.
 
-The answer is the schedule, whether the power is on at that СвітлоБот point, and the alert
-status. The API does not store your settings or build any profile. Like any website, the
+The answer is the schedule, whether the power is on at that СвітлоБот point (read by the
+server from that point's public Telegram channel), and the alert status. The API does not store your settings or build any profile. Like any website, the
 server and its network provider may keep standard technical logs (IP address, time, request)
 for a limited time, used only to keep the service running and protect it from abuse.
 
